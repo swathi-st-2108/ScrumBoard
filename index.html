@@ -64,7 +64,7 @@
         </div>
         <div class="mb-3">
             <label for="storyTime" class="form-label">Story Time</label>
-            <input type="number" class="form-control" id="storyTime" placeholder="Enter story time"/>
+            <input type="text" class="form-control" id="storyTime" placeholder="Enter story time"/>
         </div>
         <div class="mb-3">
             <label for="taskName" class="form-label">Task Name</label>
@@ -75,20 +75,28 @@
         </div>
     </form>
     </div>
-    <h2 class="text-center text-white mt-5 " id="boardSection" >Scrum Board</h2>
-        <div class="border p-4 rounded bg-dark">
-    <table class="table table-bordered mt-3 text-white">
-        <thead>
-            <tr>
-                <th>To Do</th>
-                <th>In Progress</th>
-                <th>Done</th>
-            </tr>
-        </thead>
-        <tbody id="bucketList"></tbody>
-    </table>
     </div>
+
+
+    <div class="container mt-5 w-50 text-white" id="boardSection" style="display:none;">
+    <h2 class="text-center">Scrum Board</h2>
+    <div class="border p-4 rounded bg-dark">
+        <table class="table table-bordered mt-3 text-white">
+            <thead>
+                <tr>
+                    <th>To Do</th>
+                    <th>In Progress</th>
+                    <th>Done</th>
+                </tr>
+            </thead>
+            <tbody id="bucketList"></tbody>
+        </table>
+        <div class="mb-3">
+            <button id ="logoutBtn" class="btn btn-primary w-100 mt-3">Logout</button>
+        </div>
     </div>
+</div>
+    
 
     <script src="index.js"></script>
 </body>

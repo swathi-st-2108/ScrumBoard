@@ -5,14 +5,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskForm = document.getElementById('TaskForm');
     const bucketList = document.getElementById('bucketList');
     const boardSection = document.getElementById('boardSection');
+    const logoutBtn = document.getElementById('logoutBtn');
 
     function checkLogin() {
         const role = sessionStorage.getItem("role");
-        if (role === 'admin' && sessionStorage.getItem("loggedInUser")) {
+        const isLoggedIn = sessionStorage.getItem("loggedInUser");
+
+        if (isLoggedIn && role === "admin") {
             loginSection.style.display = "none";
             crudSection.style.display = "block";
-            loadTasks(); 
-        } else if (role === 'user' && sessionStorage.getItem("loggedInUser")) {
+            boardSection.style.display = "block";
+            loadTasks();
+        } else if (isLoggedIn && role === "user") {
             loginSection.style.display = "none";
             crudSection.style.display = "none";
             boardSection.style.display = "block";
@@ -20,8 +24,20 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             loginSection.style.display = "block";
             crudSection.style.display = "none";
+            boardSection.style.display = "none";
+
+            if (sessionStorage.getItem("justLoggedOut")) {
+                alert("You have been logged out. Please fill the login details again.");
+                sessionStorage.removeItem("justLoggedOut");
+            }
         }
     }
+
+    logoutBtn.addEventListener("click", () => {
+        sessionStorage.setItem("justLoggedOut", "true");
+        sessionStorage.clear();
+        location.reload();
+    });
 
     loginForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -56,31 +72,106 @@ document.addEventListener('DOMContentLoaded', () => {
         const taskName = document.getElementById('taskName').value;
         const assignedTo = document.getElementById('developer').value;
         const dueDate = document.getElementById('storyTime').value;
+        const currentUser = sessionStorage.getItem("loggedInUser"); 
 
-        if (taskName && assignedTo && dueDate) {
-            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-            tasks.push({ name: taskName, assignedTo, dueDate });
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-            loadTasks();
-            taskForm.reset();
-        } else {
-            alert('Please fill in all fields');
+if (taskName && assignedTo && dueDate) {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks.push({
+        name: taskName,
+        assignedTo,
+        dueDate,
+        status: "todo",
+        createdBy: currentUser 
+    });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    loadTasks();
+    taskForm.reset();
+}
+    });
+
+function loadTasks() {
+    bucketList.innerHTML = '';
+
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    const role = sessionStorage.getItem("role");
+    const currentUser = sessionStorage.getItem("loggedInUser");
+
+    const todoCol = document.createElement('td');
+    const inProgressCol = document.createElement('td');
+    const doneCol = document.createElement('td');
+
+    tasks.forEach((task, index) => {
+     
+        if (
+            (role === "user" && task.assignedTo !== currentUser) ||
+            (role === "admin" && task.createdBy !== currentUser)
+        ) {
+            return;
+        }
+
+        const taskHTML = `
+            <div class="mb-2 border p-2 bg-light text-dark rounded">
+                <strong>${task.name}</strong><br>
+                Assigned to: ${task.assignedTo}<br>
+                Due: ${task.dueDate}<br>
+                ${role === "user" ? `Assigned by: ${task.createdBy}<br>` : ""}
+                ${getMoveButtons(role, task.status, index)}
+            </div>
+        `;
+
+        if (task.status === "todo") {
+            todoCol.innerHTML += taskHTML;
+        } else if (task.status === "progress") {
+            inProgressCol.innerHTML += taskHTML;
+        } else if (task.status === "done") {
+            doneCol.innerHTML += taskHTML;
         }
     });
 
-    function loadTasks() {
-        bucketList.innerHTML = '';
-        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-
-        tasks.forEach((task) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${task.name} <br> ${task.assignedTo} <br> ${task.dueDate}</td>
-                <td></td>
-                <td></td>
-            `;
-            bucketList.appendChild(row);
-        }); 
+    if (todoCol.innerHTML || inProgressCol.innerHTML || doneCol.innerHTML) {
+        const row = document.createElement('tr');
+        row.appendChild(todoCol);
+        row.appendChild(inProgressCol);
+        row.appendChild(doneCol);
+        bucketList.appendChild(row);
     }
+}
     checkLogin();
 });
+
+function getMoveButtons(role, status, index) {
+    let buttons = "";
+
+    if (role === "user") {
+        if (status === "todo") {
+            buttons += `<button class="btn btn-sm btn-warning mt-1 " onclick="moveTask(${index}, 'progress')">Move to In Progress</button>`;
+        } else if (status === "progress") {
+            buttons += `<button class="btn btn-sm btn-success mt-1" onclick="moveTask(${index}, 'done')">Move to Done</button>`;
+        }
+    }
+
+    if (role === "admin" && status === "done") {
+        buttons += `<button class="btn btn-sm btn-secondary mt-1" onclick="moveTask(${index}, 'progress')">Move to In Progress</button>`; 
+        buttons += `<button class="btn btn-sm btn-danger mt-1 ms-2" onclick="deleteTask(${index})">Accept the Task</button>`;
+    }
+
+    return buttons;
+}
+
+function moveTask(index, newStatus) {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    if (tasks[index]) {
+        tasks[index].status = newStatus;
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+    }
+}
+
+function deleteTask(index) {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    if (tasks[index]) {
+        tasks.splice(index, 1); 
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        document.dispatchEvent(new Event('DOMContentLoaded')); 
+    }
+}
