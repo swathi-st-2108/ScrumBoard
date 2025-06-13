@@ -25,16 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
             loginSection.style.display = "block";
             crudSection.style.display = "none";
             boardSection.style.display = "none";
-
-            if (sessionStorage.getItem("justLoggedOut")) {
-                alert("You have been logged out. Please fill the login details again.");
-                sessionStorage.removeItem("justLoggedOut");
-            }
         }
     }
 
     logoutBtn.addEventListener("click", () => {
-        sessionStorage.setItem("justLoggedOut", "true");
         sessionStorage.clear();
         location.reload();
     });
@@ -115,8 +109,8 @@ function loadTasks() {
             <div class="mb-2 border p-2 bg-light text-dark rounded">
                 <strong>${task.name}</strong><br>
                 Assigned to: ${task.assignedTo}<br>
-                Due: ${task.dueDate}<br>
                 ${role === "user" ? `Assigned by: ${task.createdBy}<br>` : ""}
+                Due: ${task.dueDate}<br>
                 ${getMoveButtons(role, task.status, index)}
             </div>
         `;
@@ -149,7 +143,7 @@ function loadTasks() {
 
     checkLogin();
 });
-
+    
 function getMoveButtons(role, status, index) {
     let buttons = "";
 
