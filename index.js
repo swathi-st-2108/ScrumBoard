@@ -88,7 +88,6 @@ if (taskName && assignedTo && dueDate) {
     taskForm.reset();
 }
     });
-
 function loadTasks() {
     bucketList.innerHTML = '';
 
@@ -100,14 +99,17 @@ function loadTasks() {
     const inProgressCol = document.createElement('td');
     const doneCol = document.createElement('td');
 
+    let hasVisibleTasks = false;
+
     tasks.forEach((task, index) => {
-     
-        if (
-            (role === "user" && task.assignedTo !== currentUser) ||
-            (role === "admin" && task.createdBy !== currentUser)
-        ) {
+        const isUserTask = role === "user" && task.assignedTo === currentUser;
+        const isAdminTask = role === "admin" && task.createdBy === currentUser;
+
+        if (!(isUserTask || isAdminTask)) {
             return;
         }
+
+        hasVisibleTasks = true;
 
         const taskHTML = `
             <div class="mb-2 border p-2 bg-light text-dark rounded">
@@ -128,14 +130,23 @@ function loadTasks() {
         }
     });
 
-    if (todoCol.innerHTML || inProgressCol.innerHTML || doneCol.innerHTML) {
+    if (hasVisibleTasks) {
         const row = document.createElement('tr');
         row.appendChild(todoCol);
         row.appendChild(inProgressCol);
         row.appendChild(doneCol);
         bucketList.appendChild(row);
+    } else if (role === "user") {
+        const row = document.createElement('tr');
+        const messageCell = document.createElement('td');
+        messageCell.colSpan = 3;
+        messageCell.className = 'text-center text-muted py-4';
+        messageCell.innerText = "No tasks assigned to you.";
+        row.appendChild(messageCell);
+        bucketList.appendChild(row);
     }
 }
+
     checkLogin();
 });
 
@@ -144,7 +155,7 @@ function getMoveButtons(role, status, index) {
 
     if (role === "user") {
         if (status === "todo") {
-            buttons += `<button class="btn btn-sm btn-warning mt-1 " onclick="moveTask(${index}, 'progress')">Move to In Progress</button>`;
+            buttons += `<button class="btn btn-sm btn-success mt-1 " onclick="moveTask(${index}, 'progress')">Move to In Progress</button>`;
         } else if (status === "progress") {
             buttons += `<button class="btn btn-sm btn-success mt-1" onclick="moveTask(${index}, 'done')">Move to Done</button>`;
         }
